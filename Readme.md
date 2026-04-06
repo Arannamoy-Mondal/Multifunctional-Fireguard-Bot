@@ -1,6 +1,18 @@
+## For ESP32 Camera Module 
+
+### Connections For USB to TTL 
 | Color    | Meaning  | ESP32-CAM |
 | -------- | -------- | ------------------------ |
 | 🔴 Red   | VCC (5V) | 5V pin                   |
 | ⚫ Black  | GND      | GND                      |
 | ⚪ White  | RX       | TX (U0T)                 |
 | 🟢 Green | TX       | RX (U0R)                 |
+
+
+### Connections (Specific for Flashing)
+|ESP32-CAM Pin | ESP32-CAM Pin |
+|--------------|---------------|
+|IOO (GPIOO)   | GND |
+
+
+### Select Board Type : AI Thinker ESP32CAM
