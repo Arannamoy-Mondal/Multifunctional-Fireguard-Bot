@@ -16,3 +16,7 @@
 
 
 ### Select Board Type : AI Thinker ESP32CAM
+
+# Workflow:
+
+ESP32-CAM → (WiFi) → MQTT Broker → Laptop (YOLO) → Result
