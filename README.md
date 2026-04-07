@@ -20,3 +20,9 @@
 # Workflow:
 
 ESP32-CAM → (WiFi) → MQTT Broker → Laptop (YOLO) → Result
+
+
+# 
+```bash
+uv install --lock uv.lock
+```
