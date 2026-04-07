@@ -19,7 +19,7 @@
 #define VSYNC_GPIO_NUM    25
 #define HREF_GPIO_NUM     23
 #define PCLK_GPIO_NUM     22
-
+#define FLASH_LED 4
 const char* ssid = "ESP32-CAM-HOTSPOT";
 const char* password = "";
 
@@ -139,8 +139,14 @@ void setup() {
   server.on("/", HTTP_GET, handleRoot);        // HTML page
   server.on("/stream", HTTP_GET, handleJPGStream); // MJPEG stream
   server.begin();
+
+  pinMode(FLASH_LED,OUTPUT);
+  digitalWrite(FLASH_LED,HIGH);
 }
 
 void loop() {
   server.handleClient();
 }
+
+
+
