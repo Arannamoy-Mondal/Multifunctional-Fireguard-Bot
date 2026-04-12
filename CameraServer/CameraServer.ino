@@ -20,8 +20,8 @@
 #define HREF_GPIO_NUM     23
 #define PCLK_GPIO_NUM     22
 #define FLASH_LED 4
-const char* ssid = "ESP32-CAM-HOTSPOT";
-const char* password = "";
+const char* ssid = "Dar";
+const char* password = "123456789";
 
 WebServer server(80);
 
@@ -131,8 +131,30 @@ void handleRoot() {
 
 void setup() {
   Serial.begin(115200);
-  WiFi.softAP(ssid, password);
-  Serial.println("Hotspot started: ESP32-CAM-HOTSPOT");
+
+
+  // ---------- wifi ap mode start
+  // WiFi.softAP(ssid, password);
+  // Serial.println("Hotspot started: ESP32-CAM-HOTSPOT");
+  // ---------- wifi ap mode end
+
+  // ---------- wifi client mode start
+  Serial.println();
+  Serial.print("Connecting to ");
+  Serial.println(ssid);
+
+  WiFi.begin(ssid, password);
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+
+  Serial.println("");
+  Serial.println("WiFi connected!");
+  Serial.print("IP address: ");
+  Serial.println(WiFi.localIP());
+  // ---------- wifi client mode end
+
 
   startCamera();
 
@@ -147,6 +169,5 @@ void setup() {
 void loop() {
   server.handleClient();
 }
-
 
 
