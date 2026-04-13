@@ -26,3 +26,11 @@ ESP32-CAM → (WiFi) → MQTT Broker → Laptop (YOLO) → Result
 ```bash
 uv install --lock uv.lock
 ```
+
+# 
+
+|ESP32-CAM |Arduino Uno| 
+|----------|-----------|
+|U0T|RX (Pin 0)|
+|U0R|TX (Pin 1)|
+|GND|GND|
