@@ -16,9 +16,9 @@ WebServer server(80);
 
 // --- Global Variables ---
 int robotSpeed = 200; 
-char currentMode = 'M'; // ডিফল্টভাবে ম্যানুয়াল মোড
+char currentMode = 'M'; 
 
-// অবস্টাকল ওভাররাইডের জন্য
+
 unsigned long obstacleTimer = 0;
 bool obstacleActive = false;
 
@@ -203,7 +203,7 @@ void handleCommand() {
   if (server.hasArg("cmd")) {
     char cmd = server.arg("cmd")[0];
     
-    // ল্যাপটপ থেকে অবস্টাকল সিগন্যাল
+  
     if (cmd == 'O') {
       obstacleActive = true;
       obstacleTimer = millis(); 
@@ -212,7 +212,7 @@ void handleCommand() {
       return;
     }
 
-    // ম্যানুয়াল মোডে ডিরেকশন কমান্ড এবং ইমারজেন্সি স্টপ
+
     if (currentMode == 'M' || cmd == 'S') {
       if (cmd == 'F') moveForward(); 
       else if (cmd == 'B') moveBackward();

@@ -173,7 +173,7 @@ void handleSpeed() {
 }
 
 void setup() {
-  Serial.begin(9600); // ← Arduino থেকে কমান্ড পড়ার জন্য
+  Serial.begin(9600);
 
   setupMotors();
 
@@ -199,7 +199,6 @@ void setup() {
 void loop() {
   server.handleClient();
 
-  // Auto mode: Arduino-র Serial কমান্ড পড়া
   if (currentMode == 'A' && Serial.available()) {
     char autoCmd = Serial.read();
     executeCmd(autoCmd);

@@ -16,9 +16,9 @@ WebServer server(80);
 
 // --- Global Variables ---
 int robotSpeed = 200; 
-char currentMode = 'M'; // ডিফল্টভাবে ম্যানুয়াল মোড
+char currentMode = 'M';
 
-// অবস্টাকল ওভাররাইডের জন্য গ্লোবাল ভ্যারিয়েবল
+
 unsigned long obstacleTimer = 0;
 bool obstacleActive = false;
 
@@ -187,16 +187,16 @@ void handleCommand() {
   if (server.hasArg("cmd")) {
     char cmd = server.arg("cmd")[0];
     
-    // ১. ল্যাপটপের (YOLO) কমান্ড চেক: 'O' পেলে ১০ সেকেন্ড থামবে
+  
     if (cmd == 'O') {
       obstacleActive = true;
-      obstacleTimer = millis(); // বর্তমান সময় সেভ করা
-      stopMotors();             // সাথে সাথে থেমে যাবে
+      obstacleTimer = millis(); 
+      stopMotors();            
       server.send(200, "text/plain", "Obstacle Override Active");
       return;
     }
 
-    // ২. ম্যানুয়াল মোডের কমান্ড চেক
+
     if (currentMode == 'M') {
       if (cmd == 'F') moveForward(); 
       else if (cmd == 'B') moveBackward();
@@ -220,15 +220,15 @@ void handleSpeed() {
 void handleMode() {
   if (server.hasArg("val")) {
     currentMode = server.arg("val")[0];
-    stopMotors(); // মোড চেঞ্জ করার সময় মোটর থামিয়ে দেওয়া
-    obstacleActive = false; // মোড চেঞ্জ করলে অবস্টাকল ফ্ল্যাগ রিসেট হবে
+    stopMotors(); 
+    obstacleActive = false; 
     server.send(200, "text/plain", "Mode Updated");
   }
 }
 
 // --- Main Setup & Loop ---
 void setup() {
-  Serial.begin(9600); // Arduino থেকে সেন্সর ডেটা রিসিভ করার জন্য
+  Serial.begin(9600); 
   
   setupMotors();
   setup_camera();
@@ -247,14 +247,13 @@ void setup() {
 void loop() {
   server.handleClient();
 
-  // ১. যদি ল্যাপটপ থেকে অবস্টাকল সিগন্যাল আসে, তবে এই লজিকে ঢুকবে
+
   if (obstacleActive) {
-    // চেক করবে ১০ সেকেন্ড (10000ms) পার হয়েছে কি না
+
     if (millis() - obstacleTimer >= 10000) {
-      obstacleActive = false; // ১০ সেকেন্ড পার হলে ওভাররাইড বন্ধ হয়ে যাবে
+      obstacleActive = false; 
     }
   } 
-  // ২. যদি অবস্টাকল না থাকে এবং সিস্টেম অটো মোডে থাকে, তবে আর্ডুইনোর কথা শুনবে
   else {
     if (currentMode == 'A' && Serial.available()) {
       char autoCmd = Serial.read();
