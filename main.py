@@ -5,7 +5,7 @@ import threading
 import time
 import numpy as np
 
-STREAM_URL = "http://192.168.4.1:80/stream" 
+STREAM_URL = "http://192.168.43.175:80/stream" 
 
 model = YOLO("yolo11x.pt")
 
@@ -69,7 +69,7 @@ def get_ollama_direction():
             prompt = f"I am an autonomous fireguard system. I currently see: {objects_str}. Give me a concise 1-sentence logical direction or description of this scene."
             
             try:
-                response = ollama.chat(model='gemma4:latest', messages=[
+                response = ollama.chat(model='nemotron-3-super:cloud', messages=[
                     {'role': 'system', 'content': 'You are a helpful AI assistant for a robotics vision system. Be concise and practical.'},
                     {'role': 'user', 'content': prompt}
                 ])
