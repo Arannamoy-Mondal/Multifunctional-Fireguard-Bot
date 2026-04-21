@@ -44,7 +44,7 @@
 //   pinMode(LEFT_SENSOR, INPUT);
 //   pinMode(RIGHT_SENSOR, INPUT);
   
-//   // শুধু এই তিনটিতে INPUT_PULLUP করে দিন
+
 //   pinMode(FLAME_L, INPUT_PULLUP);
 //   pinMode(FLAME_F, INPUT_PULLUP);
 //   pinMode(FLAME_R, INPUT_PULLUP);
@@ -138,7 +138,7 @@
 SoftwareSerial ESPSerial(10, 11); 
 Servo waterServo;
 
-// --- সেন্সর ও পিন কনফিগারেশন ---
+
 #define LEFT_SENSOR 4
 #define RIGHT_SENSOR 5
 
@@ -149,7 +149,7 @@ Servo waterServo;
 #define PUMP 12
 #define BUZZER 3
 
-char sysMode = 'M'; // ডিফল্ট মোড
+char sysMode = 'M'; 
 
 void setup() {
   Serial.begin(9600);     
@@ -158,23 +158,23 @@ void setup() {
   pinMode(LEFT_SENSOR, INPUT);
   pinMode(RIGHT_SENSOR, INPUT);
   
-  // ফ্লেম সেন্সরগুলোতে INPUT_PULLUP দেওয়া হয়েছে (যাতে সেন্সর খোলা থাকলে বাজার না বাজে)
+
   pinMode(FLAME_L, INPUT_PULLUP);
   pinMode(FLAME_F, INPUT_PULLUP);
   pinMode(FLAME_R, INPUT_PULLUP);
   
   pinMode(PUMP, OUTPUT); 
-  digitalWrite(PUMP, HIGH); // রিলে ডিফল্ট অফ
+  digitalWrite(PUMP, HIGH); 
   
   pinMode(BUZZER, OUTPUT); 
   digitalWrite(BUZZER, LOW);
   
   waterServo.attach(SERVO_PIN);
-  waterServo.write(90); // সেন্টারে পজিশন
+  waterServo.write(90); 
 }
 
 void loop() {
-  // ১. ESP32 থেকে মোড রিসিভ করা
+
   if (ESPSerial.available() > 0) {
     char incoming = ESPSerial.read();
     if (incoming == 'M') {
@@ -212,29 +212,28 @@ void loop() {
     int fR = digitalRead(FLAME_R);
 
     if (fL == 0 || fF == 0 || fR == 0) {
-      tone(BUZZER, 1000);   // Passive Buzzer এর জন্য 1000Hz ফ্রিকোয়েন্সিতে শব্দ
-      ESPSerial.print('S'); // চাকা থামানোর কমান্ড
+      tone(BUZZER, 1000);  
+      ESPSerial.print('S'); 
       
-      // কোন দিকের সেন্সর আগুন পেয়েছে সেই অনুযায়ী পানি ছিটানো
+     
       if (fF == 0) extinguish(90);
       else if (fL == 0) extinguish(160);
       else if (fR == 0) extinguish(20);
       
     } else {
-      noTone(BUZZER);       // আগুন না থাকলে বাজার পুরোপুরি বন্ধ
+      noTone(BUZZER);     
       ESPSerial.print('S');
     }
     delay(100);
   }
 }
 
-// --- পানি ছিটানোর ফাংশন (Sweep Servo) ---
+
 void extinguish(int angle) {
   waterServo.write(angle); 
   delay(500); 
-  digitalWrite(PUMP, LOW); // পাম্প চালু
-  
-  // ডানে-বামে স্প্রে করা
+  digitalWrite(PUMP, LOW); 
+
   for(int i = angle - 15; i <= angle + 15; i++) { 
     waterServo.write(i); delay(20); 
   }
@@ -242,8 +241,8 @@ void extinguish(int angle) {
     waterServo.write(i); delay(20); 
   }
   
-  digitalWrite(PUMP, HIGH); // পাম্প বন্ধ
-  waterServo.write(90);     // সার্ভো আবার সোজা
+  digitalWrite(PUMP, HIGH); 
+  waterServo.write(90);    
 }
 
 /*
@@ -253,7 +252,7 @@ void extinguish(int angle) {
 SoftwareSerial ESPSerial(10, 11); 
 Servo waterServo;
 
-// --- সেন্সর ও পিন কনফিগারেশন ---
+
 #define LEFT_SENSOR 4
 #define RIGHT_SENSOR 5
 
@@ -264,7 +263,7 @@ Servo waterServo;
 #define PUMP 12
 #define BUZZER 3 // Active Buzzer Pin 3
 
-char sysMode = 'M'; // ডিফল্ট মোড
+char sysMode = 'M'; 
 
 void setup() {
   Serial.begin(9600);     
@@ -273,23 +272,23 @@ void setup() {
   pinMode(LEFT_SENSOR, INPUT);
   pinMode(RIGHT_SENSOR, INPUT);
   
-  // ফ্লেম সেন্সরগুলোতে INPUT_PULLUP দেওয়া হয়েছে (যাতে সেন্সর খোলা থাকলে বাজার না বাজে)
+ 
   pinMode(FLAME_L, INPUT_PULLUP);
   pinMode(FLAME_F, INPUT_PULLUP);
   pinMode(FLAME_R, INPUT_PULLUP);
   
   pinMode(PUMP, OUTPUT); 
-  digitalWrite(PUMP, HIGH); // রিলে ডিফল্ট অফ
+  digitalWrite(PUMP, HIGH); 
   
   pinMode(BUZZER, OUTPUT); 
-  digitalWrite(BUZZER, LOW); // বাজার ডিফল্ট বন্ধ
+  digitalWrite(BUZZER, LOW); 
   
   waterServo.attach(SERVO_PIN);
-  waterServo.write(90); // সেন্টারে পজিশন
+  waterServo.write(90); 
 }
 
 void loop() {
-  // ১. ESP32 থেকে মোড রিসিভ করা
+ 
   if (ESPSerial.available() > 0) {
     char incoming = ESPSerial.read();
     if (incoming == 'M') {
@@ -327,29 +326,29 @@ void loop() {
     int fR = digitalRead(FLAME_R);
 
     if (fL == 0 || fF == 0 || fR == 0) {
-      digitalWrite(BUZZER, HIGH); // Active Buzzer বাজানোর জন্য HIGH
-      ESPSerial.print('S'); // চাকা থামানোর কমান্ড
+      digitalWrite(BUZZER, HIGH); 
+      ESPSerial.print('S'); 
       
-      // কোন দিকের সেন্সর আগুন পেয়েছে সেই অনুযায়ী পানি ছিটানো
+     
       if (fF == 0) extinguish(90);
       else if (fL == 0) extinguish(160);
       else if (fR == 0) extinguish(20);
       
     } else {
-      digitalWrite(BUZZER, LOW);  // আগুন না থাকলে বাজার পুরোপুরি বন্ধ
+      digitalWrite(BUZZER, LOW);  
       ESPSerial.print('S');
     }
     delay(100);
   }
 }
 
-// --- পানি ছিটানোর ফাংশন (Sweep Servo) ---
+
 void extinguish(int angle) {
   waterServo.write(angle); 
   delay(500); 
-  digitalWrite(PUMP, LOW); // পাম্প চালু
+  digitalWrite(PUMP, LOW); 
   
-  // ডানে-বামে স্প্রে করা
+
   for(int i = angle - 15; i <= angle + 15; i++) { 
     waterServo.write(i); delay(20); 
   }
@@ -357,6 +356,6 @@ void extinguish(int angle) {
     waterServo.write(i); delay(20); 
   }
   
-  digitalWrite(PUMP, HIGH); // পাম্প বন্ধ
-  waterServo.write(90);     // সার্ভো আবার সোজা
+  digitalWrite(PUMP, HIGH); 
+  waterServo.write(90);    
 }*/

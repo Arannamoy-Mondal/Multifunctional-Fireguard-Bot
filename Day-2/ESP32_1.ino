@@ -85,7 +85,7 @@ const char INDEX_HTML[] PROGMEM = R"rawliteral(
 </html>
 )rawliteral";
 
-// --- মোটর ফাংশন ---
+
 void setupMotors() {
   ledcAttach(IN1, 2000, 8); ledcAttach(IN2, 2000, 8);
   ledcAttach(IN3, 2000, 8); ledcAttach(IN4, 2000, 8);

@@ -118,7 +118,7 @@ void handleMode() {
   if (server.hasArg("val")) {
     currentMode = server.arg("val")[0];
     stopMotors();
-    Serial.print("M"); Serial.println(currentMode); // Arduino কে মোড জানানো (e.g. MA, MF)
+    Serial.print("M"); Serial.println(currentMode); 
   }
   server.send(200, "text/plain", "OK");
 }
