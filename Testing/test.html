@@ -65,7 +65,7 @@
       <button class="btn-speed" onclick="changeSpeed(-10)">SPEED DOWN</button>
       <div class="speed-text">SPEED: <span id="speedDisplay">255</span></div>
       <button class="btn-speed" onclick="changeSpeed(10)">SPEED UP</button>
-      </div>
+    </div>
   </div>
   
   <div id="autoControls" class="control-section">
@@ -115,9 +115,7 @@
     function sendCmd(cmd) { fetch('/action?cmd=' + cmd); }
     
     function changeSpeed(step) {
-      // --- New Code Start: Minimum speed changed from 150 to 50 ---
       currentSpeed = Math.min(255, Math.max(50, currentSpeed + step));
-      // --- New Code End ---
       document.getElementById('speedDisplay').innerText = currentSpeed;
       fetch('/speed?val=' + currentSpeed);
     }
@@ -132,9 +130,10 @@
       }
     }
 
+    // Camera Load Optimization (300ms)
     setInterval(function() {
       document.getElementById('camFeed').src = '/capture?r=' + Math.random();
-    }, 150);
+    }, 300);
   </script>
 </body>
 </html>
