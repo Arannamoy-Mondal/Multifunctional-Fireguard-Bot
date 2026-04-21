@@ -83,7 +83,7 @@ while True:
     if obstacle_in_path:
 
         if left_side_objects <= right_side_objects:
-            current_state = "INSTANT STOP -> ⬅MOVE LEFT"
+            current_state = "INSTANT STOP -> MOVE LEFT"
         else:
             current_state = "INSTANT STOP -> MOVE RIGHT"
         
