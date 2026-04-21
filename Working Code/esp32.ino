@@ -199,7 +199,7 @@ void setup() {
 void loop() {
   server.handleClient();
 
-  // Auto mode: Arduino-র Serial কমান্ড পড়া
+  
   if (currentMode == 'A' && Serial.available()) {
     char autoCmd = Serial.read();
     executeCmd(autoCmd);
