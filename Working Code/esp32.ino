@@ -173,7 +173,7 @@ void handleSpeed() {
 }
 
 void setup() {
-  Serial.begin(9600); // ← Arduino থেকে কমান্ড পড়ার জন্য
+  Serial.begin(9600); 
 
   setupMotors();
 
