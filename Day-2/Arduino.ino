@@ -1,79 +1,151 @@
-#include <SoftwareSerial.h>
-#include <Servo.h>
+#include "esp_camera.h"
+#include <WiFi.h>
+#include <WebServer.h>
 
-SoftwareSerial ESPSerial(10, 11); 
-Servo waterServo;
+const char* ssid = "FireBot";
+const char* password = ""; 
 
-#define LEFT_IR 4
-#define RIGHT_IR 5
-#define FLAME_LEFT 6
-#define FLAME_FRONT 7
-#define FLAME_RIGHT 8
-#define PUMP 12
-#define SERVO_PIN 9
+WebServer server(80);
 
-char systemMode = 'M'; // M: Manual, A: Auto(Line), F: Fire
+#define IN1 14 
+#define IN2 15 
+#define IN3 13 
+#define IN4 12 
+
+int robotSpeed = 200; 
+char currentMode = 'M'; 
+
+#define PWDN_GPIO_NUM 32
+#define RESET_GPIO_NUM -1
+#define XCLK_GPIO_NUM 0
+#define SIOD_GPIO_NUM 26
+#define SIOC_GPIO_NUM 27
+#define Y9_GPIO_NUM 35
+#define Y8_GPIO_NUM 34
+#define Y7_GPIO_NUM 39
+#define Y6_GPIO_NUM 36
+#define Y5_GPIO_NUM 21
+#define Y4_GPIO_NUM 19
+#define Y3_GPIO_NUM 18
+#define Y2_GPIO_NUM 5
+#define VSYNC_GPIO_NUM 25
+#define HREF_GPIO_NUM 23
+#define PCLK_GPIO_NUM 22
+
+const char INDEX_HTML[] PROGMEM = R"rawliteral(
+<!DOCTYPE html>
+<html>
+<head>
+  <title>FireBot Pro</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <style>
+    body { font-family: Arial, sans-serif; text-align: center; background-color: #2c3e50; color: white; margin: 0; padding: 10px; }
+    img { width: 100%; max-width: 600px; border-radius: 10px; border: 4px solid #34495e; }
+    .tabs { display: flex; justify-content: center; gap: 5px; margin: 15px 0; }
+    .tab-btn { flex: 1; padding: 10px 2px; font-size: 11px; font-weight: bold; border: none; border-radius: 5px; color: white; background-color: #7f8c8d; }
+    .control-section { display: none; }
+    .active-section { display: block; }
+    .pad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; max-width: 320px; margin: 0 auto; }
+    .btn { background-color: #3498db; color: white; border: none; padding: 15px; font-weight: bold; border-radius: 10px; }
+    .btn-red { background-color: #e74c3c; }
+  </style>
+</head>
+<body onload="switchTab('M')">
+  <h2>FIREBOT PRO</h2>
+  <img id="camFeed" src="/capture">
+  <div class="tabs">
+    <button id="tabM" class="tab-btn" onclick="switchTab('M')">MANUAL</button>
+    <button id="tabA" class="tab-btn" onclick="switchTab('A')">LINE FOLLOW</button>
+    <button id="tabF" class="tab-btn" onclick="switchTab('F')">FIREFIGHTER</button>
+  </div>
+  <div id="secM" class="control-section">
+    <div class="pad">
+      <div></div><button class="btn" onmousedown="sendCmd('F')" onmouseup="sendCmd('S')">FORWARD</button><div></div>
+      <button class="btn" onmousedown="sendCmd('L')" onmouseup="sendCmd('S')">LEFT</button>
+      <button class="btn btn-red" onclick="sendCmd('S')">STOP</button>
+      <button class="btn" onmousedown="sendCmd('R')" onmouseup="sendCmd('S')">RIGHT</button>
+      <div></div><button class="btn" onmousedown="sendCmd('B')" onmouseup="sendCmd('S')">BACKWARD</button><div></div>
+    </div>
+  </div>
+  <div id="secA" class="control-section"><div style="padding:20px; background:#34495e; border-radius:10px;">LINE FOLLOWER ACTIVE</div></div>
+  <div id="secF" class="control-section"><div style="padding:20px; background:#34495e; border-radius:10px; color:#e67e22;">FIREFIGHTER MODE ACTIVE</div></div>
+  <script>
+    function switchTab(m) {
+      document.querySelectorAll('.control-section').forEach(s => s.classList.remove('active-section'));
+      document.querySelectorAll('.tab-btn').forEach(b => b.style.backgroundColor = '#7f8c8d');
+      if(m=='M'){ document.getElementById('secM').classList.add('active-section'); document.getElementById('tabM').style.backgroundColor='#e67e22'; }
+      else if(m=='A'){ document.getElementById('secA').classList.add('active-section'); document.getElementById('tabA').style.backgroundColor='#27ae60'; }
+      else if(m=='F'){ document.getElementById('secF').classList.add('active-section'); document.getElementById('tabF').style.backgroundColor='#c0392b'; }
+      fetch('/mode?val=' + m);
+    }
+    function sendCmd(c) { fetch('/action?cmd=' + c); }
+    setInterval(function() { document.getElementById('camFeed').src = '/capture?r=' + Math.random(); }, 150);
+  </script>
+</body>
+</html>
+)rawliteral";
+
+// --- মোটর ফাংশন ---
+void setupMotors() {
+  ledcAttach(IN1, 2000, 8); ledcAttach(IN2, 2000, 8);
+  ledcAttach(IN3, 2000, 8); ledcAttach(IN4, 2000, 8);
+}
+void moveForward() { ledcWrite(IN1, robotSpeed); ledcWrite(IN2, 0); ledcWrite(IN3, robotSpeed); ledcWrite(IN4, 0); }
+void moveBackward() { ledcWrite(IN1, 0); ledcWrite(IN2, robotSpeed); ledcWrite(IN3, 0); ledcWrite(IN4, robotSpeed); }
+void turnRight() { ledcWrite(IN1, robotSpeed); ledcWrite(IN2, 0); ledcWrite(IN3, 0); ledcWrite(IN4, robotSpeed); }
+void turnLeft() { ledcWrite(IN1, 0); ledcWrite(IN2, robotSpeed); ledcWrite(IN3, robotSpeed); ledcWrite(IN4, 0); }
+void stopMotors() { ledcWrite(IN1, 0); ledcWrite(IN2, 0); ledcWrite(IN3, 0); ledcWrite(IN4, 0); }
+
+// --- Web Endpoints ---
+void handleCommand() {
+  if (server.hasArg("cmd")) {
+    char cmd = server.arg("cmd")[0];
+    if (currentMode == 'M' || cmd == 'S') {
+      if (cmd == 'F') moveForward(); else if (cmd == 'B') moveBackward();
+      else if (cmd == 'L') turnLeft(); else if (cmd == 'R') turnRight();
+      else if (cmd == 'S') stopMotors();
+    }
+  }
+  server.send(200, "text/plain", "OK");
+}
+void handleMode() {
+  if (server.hasArg("val")) {
+    currentMode = server.arg("val")[0];
+    stopMotors();
+    Serial.print("M"); Serial.println(currentMode);
+  }
+  server.send(200, "text/plain", "OK");
+}
 
 void setup() {
   Serial.begin(9600);
-  ESPSerial.begin(9600);
-  pinMode(LEFT_IR, INPUT); pinMode(RIGHT_IR, INPUT);
-  pinMode(FLAME_LEFT, INPUT); pinMode(FLAME_FRONT, INPUT); pinMode(FLAME_RIGHT, INPUT);
-  pinMode(PUMP, OUTPUT); digitalWrite(PUMP, HIGH); // Pump OFF
-  waterServo.attach(SERVO_PIN);
-  waterServo.write(90);
+  setupMotors();
+  
+  camera_config_t config;
+  config.ledc_channel = LEDC_CHANNEL_0; config.ledc_timer = LEDC_TIMER_0;
+  config.pin_d0=Y2_GPIO_NUM; config.pin_d1=Y3_GPIO_NUM; config.pin_d2=Y4_GPIO_NUM; config.pin_d3=Y5_GPIO_NUM;
+  config.pin_d4=Y6_GPIO_NUM; config.pin_d5=Y7_GPIO_NUM; config.pin_d6=Y8_GPIO_NUM; config.pin_d7=Y9_GPIO_NUM;
+  config.pin_xclk=XCLK_GPIO_NUM; config.pin_pclk=PCLK_GPIO_NUM; config.pin_vsync=VSYNC_GPIO_NUM; config.pin_href=HREF_GPIO_NUM;
+  config.pin_sccb_sda=SIOD_GPIO_NUM; config.pin_sccb_scl=SIOC_GPIO_NUM; config.pin_pwdn=PWDN_GPIO_NUM; config.pin_reset=RESET_GPIO_NUM;
+  config.xclk_freq_hz=20000000; config.pixel_format=PIXFORMAT_JPEG; config.frame_size=FRAMESIZE_VGA; config.jpeg_quality=12; config.fb_count=1;
+  esp_camera_init(&config);
+
+  WiFi.softAP(ssid, password);
+  server.on("/", [](){ server.send(200, "text/html", INDEX_HTML); });
+  server.on("/capture", [](){
+    camera_fb_t* fb = esp_camera_fb_get();
+    if (fb) { server.send_P(200, "image/jpeg", (const char*)fb->buf, fb->len); esp_camera_fb_return(fb); }
+  });
+  server.on("/action", handleCommand);
+  server.on("/mode", handleMode);
+  server.begin();
 }
 
 void loop() {
-  if (ESPSerial.available() > 1) {
-    if (ESPSerial.read() == 'M') {
-      systemMode = ESPSerial.read();
-    }
+  server.handleClient();
+  if (currentMode != 'M' && Serial.available()) {
+    char autoCmd = Serial.read();
+    if (autoCmd == 'F') moveForward(); else if (autoCmd == 'L') turnLeft();
+    else if (autoCmd == 'R') turnRight(); else if (autoCmd == 'S') stopMotors();
   }
-
-  if (systemMode == 'A') {
-    lineFollowerLogic();
-  } 
-  else if (systemMode == 'F') {
-    firefighterLogic();
-  }
-}
-
-void lineFollowerLogic() {
-  int L = digitalRead(LEFT_IR);
-  int R = digitalRead(RIGHT_IR);
-  if (L == 0 && R == 0) ESPSerial.print('F');
-  else if (L == 1 && R == 0) ESPSerial.print('R');
-  else if (L == 0 && R == 1) ESPSerial.print('L');
-  else ESPSerial.print('S');
-  delay(50);
-}
-
-void firefighterLogic() {
-  int fL = digitalRead(FLAME_LEFT);
-  int fF = digitalRead(FLAME_FRONT);
-  int fR = digitalRead(FLAME_RIGHT);
-
-  if (fF == 0) { 
-    ESPSerial.print('S'); 
-    extinguishFire();
-  } 
-  else if (fL == 0) { 
-    ESPSerial.print('L');
-  } 
-  else if (fR == 0) { 
-    ESPSerial.print('R');
-  } 
-  else {
-    ESPSerial.print('S'); 
-  }
-  delay(100);
-}
-
-void extinguishFire() {
-  digitalWrite(PUMP, LOW); 
-  for (int p=60; p<=120; p++){ waterServo.write(p); delay(15); }
-  for (int p=120; p>=60; p--){ waterServo.write(p); delay(15); }
-  digitalWrite(PUMP, HIGH); 
-  waterServo.write(90);
 }
