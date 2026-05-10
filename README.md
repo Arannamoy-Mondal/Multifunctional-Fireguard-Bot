@@ -10,8 +10,8 @@ An ESP32-based intelligent robotic system designed for early fire detection, aut
 - [Software & Tech Stack](#software--tech-stack)
 - [Installation & Setup](#installation--setup)
 - [How to Operate](#how-to-operate)
-- [Future Enhancements](#future-enhancements)
-- [Credits & Team](#credits--team)
+<!-- - [Future Enhancements](#future-enhancements)
+- [Credits & Team](#credits--team) -->
 
 ---
 
@@ -99,7 +99,8 @@ The robot features four distinct operational modes, accessible via a custom Web 
 ### 3. Python AI Setup (Optional: For YOLO Mode)
 1. Install Python 3.8+ on your laptop.
 2. Install the required libraries:
-   ```bash
+
+```bash
    pip install opencv-python requests numpy ultralytics
 
 ```
@@ -115,6 +116,7 @@ The robot features four distinct operational modes, accessible via a custom Web 
 3. **Access Dashboard:** Open a web browser and navigate to `http://192.168.4.1`.
 4. **Select Mode:** Use the top tabs (MANUAL, LINE, FIRE, YOLO AI) to switch between operational modes.
 5. **Run AI Vision:** If testing the YOLO AI mode, run the Python script on your laptop:
+
 ```bash
 python yolo_navigation.py
 
