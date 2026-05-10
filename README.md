@@ -1,115 +1,126 @@
-# 🚒 Multifunctional Fireguard-Bot (FireBot Pro)
+# 🔥 Multifunctional Fireguard Bot
 
-![Project Status](https://img.shields.io/badge/Status-Active-success)
-![Hardware](https://img.shields.io/badge/Hardware-Arduino_Uno_%7C_ESP32--CAM-blue)
-![Software](https://img.shields.io/badge/Software-C++_%7C_Python_%7C_YOLOv11-yellow)
-![License](https://img.shields.io/badge/License-MIT-green)
-
-An autonomous and manually controllable multifunctional rover featuring a **Primary-Secondary** communication architecture. The robot utilizes an **ESP32-CAM** (Primary Controller) for Wi-Fi communication, Web UI hosting, and camera streaming, paired with an **Arduino Uno** (Secondary Node) for real-time sensor processing and fire extinguishing mechanics. It supports Line Following, autonomous Firefighting, and AI-driven navigation using **YOLOv11**.
+An ESP32-based intelligent robotic system designed for early fire detection, autonomous navigation, and remote response. This project integrates line following, obstacle avoidance via AI vision, real-time flame detection, and a Wi-Fi-based smartphone control interface into a single, cohesive platform.
 
 ## 📑 Table of Contents
-- [Key Features](#-key-features)
-- [System Architecture](#-system-architecture)
-- [Hardware Requirements](#-hardware-requirements)
-- [Wiring & Connections](#-wiring--connections)
-- [Installation & Setup](#-installation--setup)
-- [Usage & Modes](#-usage--modes)
-- [YOLO AI Setup](#-yolo-ai-setup)
-- [Author](#-author)
+- [Project Overview](#project-overview)
+- [Key Features & Modes](#key-features--modes)
+- [Hardware Architecture](#hardware-architecture)
+- [Pin Configuration](#pin-configuration)
+- [Software & Tech Stack](#software--tech-stack)
+- [Installation & Setup](#installation--setup)
+- [How to Operate](#how-to-operate)
+- [Future Enhancements](#future-enhancements)
+- [Credits & Team](#credits--team)
 
 ---
 
-## ✨ Key Features
-* 🎮 **Manual Control (Web UI):** Drive the bot via a responsive mobile/desktop web interface with adjustable PWM speed control (50-255).
-* 🛤️ **Line Follower Mode:** Autonomous navigation following designated paths using dual IR sensors.
-* 🔥 **Firefighter Mode:** Triple flame-sensor array detects fire position (Left, Center, Right). Automatically stops, triggers an active buzzer, and uses a servo-mounted water cannon to sweep and extinguish the fire.
-* 🧠 **YOLOv11 AI Navigation:** Real-time object detection via laptop processing. The bot streams video to the laptop, which runs YOLOv11 to detect obstacles and sends HTTP GET commands back to the ESP32 to dodge them.
-* 🛑 **Global Emergency Override:** A zero-latency emergency stop button in the Web UI that instantly locks all motors, pumps, and sensors, displaying a full-screen lockdown overlay.
+## 🚀 Project Overview
+Traditional fire detection systems rely on fixed sensors, which can delay response times. The Multifunctional Fireguard Bot solves this by acting as a mobile "intelligent sentinel." It operates in both autonomous and manual modes, serving as a low-cost robotic solution to enhance safety in homes, industries, and smart buildings. 
+
+The system uses a **Primary-Secondary communication model** where an Arduino Uno handles low-level sensor reading and actuation, while an ESP32-CAM manages Wi-Fi, camera streaming, and high-level motor control.
 
 ---
 
-## 🏗️ System Architecture
-The project uses a **Primary-Secondary Serial Communication** model (`9600 baud`):
-1. **ESP32-CAM (Primary Controller):** Hosts the SoftAP Wi-Fi (`SSID: FireBot`), serves the HTML/JS Web UI, controls the L298N Motor Driver via PWM, and streams JPEG frames. 
-2. **Arduino Uno (Secondary Node):** Polls hardware sensors (IR, Flame) at high frequencies and controls the water pump, servo, and buzzer. It sends movement requests (Forward, Left, Right, Stop) to the ESP32 based on sensor data.
+## ⚙️ Key Features & Modes
+
+The robot features four distinct operational modes, accessible via a custom Web UI:
+
+1. **🎮 Manual Mode:** Full control of the robot using a virtual D-Pad on the web dashboard. Users can adjust motor speed using PWM (50-255).
+2. **〰️ Line Follower Mode:** Utilizes dual IR sensors to autonomously detect and follow predefined black paths. The Arduino calculates movements (Forward, Left, Right) and sends them to the ESP32.
+3. **🔥 Firefighter Mode:** Acts as a radar, utilizing three flame sensors (Left, Front, Right). Upon detecting a fire hazard, the robot instantly stops, locks its state, and activates a loud buzzer alert.
+4. **👁️ YOLO AI Mode (Obstacle Avoidance):** Streams real-time MJPEG video to a connected laptop. A Python script running **YOLOv11** detects obstacles in the path and dynamically sends HTTP commands back to the ESP32 to autonomously steer clear of them.
+5. **🛑 Emergency Stop:** A global fail-safe button that immediately halts all motors and operations across all modes.
 
 ---
 
-## 🛠️ Hardware Requirements
-* **Microcontrollers:** ESP32-CAM (with FTDI programmer), Arduino Uno R3.
-* **Actuators:** 4x DC Gear Motors, L298N Motor Driver, 5V Mini Water Pump, SG90 Micro Servo.
-* **Sensors:** 2x IR Tracking Sensors, 3x Flame Sensors.
-* **Misc:** Active Buzzer, Power Supply (e.g., 2x 18650 Li-ion batteries), Jumper Wires, Chassis.
+## 🛠️ Hardware Architecture
 
----
-
-## 🔌 Wiring & Connections
-
-### ESP32-CAM to Motor Driver (L298N)
-| ESP32-CAM Pin | L298N Pin | Description |
+| Component | Role in System | Qty |
 | :--- | :--- | :--- |
-| GPIO 14 | IN1 | Left Motor Forward |
-| GPIO 15 | IN2 | Left Motor Backward |
-| GPIO 13 | IN3 | Right Motor Forward |
-| GPIO 12 | IN4 | Right Motor Backward |
-
-### Arduino Uno to Sensors & Actuators
-| Arduino Pin | Component | Description |
-| :--- | :--- | :--- |
-| D4 | Left IR Sensor | Line tracking |
-| D5 | Right IR Sensor | Line tracking |
-| D6 | Flame Sensor (Left) | Fire detection |
-| D7 | Flame Sensor (Front)| Fire detection |
-| D8 | Flame Sensor (Right)| Fire detection |
-| D9 | Servo Motor | Water cannon sweeper |
-| D12 | Water Pump (Relay) | Sprays water (Active LOW) |
-| D3 | Active Buzzer | Fire alert alarm |
-
-### Inter-Microcontroller Communication
-* **Arduino Pin 10 (RX)** ➡️ **ESP32-CAM TX**
-* **Arduino Pin 11 (TX)** ➡️ **ESP32-CAM RX**
-* *(Note: Ensure common Ground between Arduino, ESP32, and power supplies).*
+| **ESP32-CAM** | Primary controller, Wi-Fi Server, Camera streaming | 1 |
+| **Arduino Uno** | Secondary controller, handles sensors & alarms | 1 |
+| **L298N Motor Driver** | Controls the locomotion of the robot | 1 |
+| **DC Gear Motors** | Wheel actuation | 4 |
+| **Flame Sensors** | Detects fire presence and direction | 3 |
+| **IR Tracking Sensors**| Reads black lines for path following | 2 |
+| **Active Buzzer** | Provides audible fire alerts | 1 |
+| **18650 Li-ion** | Main power supply | 3 |
 
 ---
 
-## 🚀 Installation & Setup
+## 🔌 Pin Configuration
 
-### 1. Arduino Setup
+### 1. ESP32-CAM Wiring (Primary Controller)
+**Motor Driver (L298N):**
+* `IN1` (Left Motor Forward) ➔ **GPIO 14**
+* `IN2` (Left Motor Backward) ➔ **GPIO 15**
+* `IN3` (Right Motor Forward) ➔ **GPIO 13**
+* `IN4` (Right Motor Backward) ➔ **GPIO 12**
+
+**Camera Module (Ai-Thinker Default):**
+* `PWDN`: 32 | `RESET`: -1 | `XCLK`: 0 | `SIOD`: 26 | `SIOC`: 27 | `VSYNC`: 25 | `HREF`: 23 | `PCLK`: 22
+* `Data Pins`: Y9(35), Y8(34), Y7(39), Y6(36), Y5(21), Y4(19), Y3(18), Y2(5)
+
+### 2. Arduino Uno Wiring (Secondary Controller)
+**Sensors & Actuators:**
+* `Left IR Sensor` ➔ **Pin 4**
+* `Right IR Sensor` ➔ **Pin 5**
+* `Left Flame Sensor` ➔ **Pin 6**
+* `Front Flame Sensor` ➔ **Pin 7**
+* `Right Flame Sensor` ➔ **Pin 8**
+* `Active Buzzer` ➔ **Pin 3**
+
+**ESP32-CAM to Arduino Serial Communication:**
+* `Arduino RX (Pin 10)` ➔ **ESP32 TX**
+* `Arduino TX (Pin 11)` ➔ **ESP32 RX**
+
+---
+
+## 💻 Software & Tech Stack
+* **Microcontrollers:** C++ (Arduino IDE) with `esp_camera.h` and `SoftwareSerial`.
+* **Web UI:** HTML, CSS, JavaScript (Hosted directly on the ESP32's memory).
+* **AI & Vision:** Python, OpenCV, Ultralytics YOLOv11 (`yolo11n.pt`).
+
+---
+
+## 🔧 Installation & Setup
+
+### 1. Arduino Uno Setup
 1. Open the Arduino IDE.
-2. Install the standard `<Servo.h>` and `<SoftwareSerial.h>` libraries.
-3. Upload `arduino_code.ino` to the Arduino Uno.
+2. Upload the `arduino_code.ino` file to the Arduino Uno.
+3. Ensure the Arduino is connected to the ESP32 via SoftwareSerial (Pins 10 & 11).
 
 ### 2. ESP32-CAM Setup
-1. Install the ESP32 Board Package in Arduino IDE.
-2. Select **AI Thinker ESP32-CAM** from the boards menu.
-3. Upload `esp32_cam_code.ino` using an FTDI module.
-4. *Troubleshooting:* If you face camera init errors, ensure PSRAM is enabled and the FTDI provides sufficient 5V power.
+1. Install the ESP32 board manager in the Arduino IDE.
+2. Select the `AI Thinker ESP32-CAM` board.
+3. Upload the `esp32_cam_code.ino` file. *(Note: Make sure your FTDI programmer is set to 5V and GPIO0 is grounded during upload).*
+
+### 3. Python AI Setup (Optional: For YOLO Mode)
+1. Install Python 3.8+ on your laptop.
+2. Install the required libraries:
+   ```bash
+   pip install opencv-python requests numpy ultralytics
+
+```
+
+3. Ensure the laptop is connected to the robot's Wi-Fi network.
 
 ---
 
-## 🕹️ Usage & Modes
-1. Power on the robot.
-2. Connect your smartphone or laptop to the Wi-Fi network: **SSID: `FireBot`** (No password).
-3. Open a web browser and go to `http://192.168.4.1`.
-4. Select your desired mode from the top tabs:
-   * **MANUAL:** Use the D-Pad to move and buttons to adjust speed.
-   * **LINE:** The bot will start following black lines.
-   * **FIRE:** The bot will roam/standby until it detects a flame, then extinguish it.
-   * **YOLO AI:** Engages the endpoint for Python-based remote control.
+## 🕹️ How to Operate
 
----
+1. **Power On:** Turn on the power supply. The ESP32-CAM will initialize and create a Wi-Fi SoftAP.
+2. **Connect to Wi-Fi:** Connect your smartphone or laptop to the Wi-Fi network named **`FireBot`**.
+3. **Access Dashboard:** Open a web browser and navigate to `http://192.168.4.1`.
+4. **Select Mode:** Use the top tabs (MANUAL, LINE, FIRE, YOLO AI) to switch between operational modes.
+5. **Run AI Vision:** If testing the YOLO AI mode, run the Python script on your laptop:
+```bash
+python yolo_navigation.py
 
-## 👁️ YOLO AI Setup (Laptop/PC)
-To run the autonomous obstacle avoidance script:
+```
 
-1. Ensure your laptop is connected to the `FireBot` Wi-Fi network.
-2. Install Python dependencies:
-   ```bash
-   pip install opencv-python ultralytics requests
-   ```
-3. Run the inference script:
-   ```bash
-   python yolo_navigation.py
-   ```
-4. The script will fetch the stream from `http://192.168.4.1/stream`, process bounding boxes, and automatically send HTTP GET commands (e.g., `/action?cmd=L`) to steer the bot away from obstacles.
+
+
+
 
